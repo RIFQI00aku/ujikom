@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node", // Resolusi modul menggunakan Node.js
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve", // Menyatakan React JSX baru
+    "incremental": true,
+    "baseUrl": "./", // Base URL untuk folder sumber daya
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ] // Menentukan alias untuk src
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts", // File deklarasi Next.js
+    "src/**/*", // Menyertakan semua file di dalam folder src
+    ".next/types/**/*.ts" // File deklarasi Next.js build
+  ],
+  "exclude": [
+    "node_modules", // Menyaring folder node_modules
+    "build" // Jika Anda memiliki folder build, pastikan dikecualikan
+  ]
+}
