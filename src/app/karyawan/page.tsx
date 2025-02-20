@@ -1,106 +1,123 @@
-"use client"; // Tambahkan ini agar bisa menggunakan useRouter
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation'; // Ganti dari next/router ke next/navigation
-import { usePathname } from 'next/navigation'; // Import usePathname untuk mendeteksi pathname
-import Sidebar from '../components/sidebar';  // Pastikan path-nya benar
-
-type Jabatan = "admin" | "owner";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import Sidebar from "../components/sidebar";
 
 type Karyawan = {
-  id: number;
-  nama: string;
-  akun: string;
-  password: string;
-  jabatan: Jabatan;
+  id_user: number;
+  username: string;
+  email: string;
+  role: string;
 };
 
 export default function KaryawanPage() {
   const router = useRouter();
-  const pathname = usePathname(); // Menggunakan usePathname untuk mendeteksi path yang aktif
+  const [karyawan, setKaryawan] = useState<Karyawan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [karyawan, setKaryawan] = useState<Karyawan[]>([
-    { id: 1, nama: 'John Doe', akun: 'johndoe', password: 'password123', jabatan: "admin" },
-    { id: 2, nama: 'Jane Smith', akun: 'janesmith', password: 'password456', jabatan: "owner" },
-  ]);
+  useEffect(() => {
+    const fetchKaryawan = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const response = await axios.get<Karyawan[]>(`${apiUrl}/api/user`, {
+          withCredentials: true,
+        });
+        console.log("Response dari server:", response.data);
 
-  // Fungsi untuk menambahkan karyawan baru (default jabatan "admin")
-  const tambahKaryawan = () => {
-    const newKaryawan: Karyawan = {
-      id: karyawan.length + 1,
-      nama: 'New Karyawan',
-      akun: 'newakun',
-      password: 'newpassword',
-      jabatan: "admin", // Atur default jabatan sebagai admin. Anda bisa menyesuaikannya jika diperlukan.
+        if (Array.isArray(response.data)) {
+          setKaryawan(response.data);
+        } else {
+          setError("Data yang diterima tidak valid.");
+        }
+      } catch (err: any) {
+        console.error("🔥 Error Fetching Data:", err);
+        setError(
+          `Gagal mengambil data dari server. Pastikan backend berjalan dan CORS dikonfigurasi dengan benar. Error: ${err.message}`
+        );
+      } finally {
+        setLoading(false);
+      }
     };
-    setKaryawan([...karyawan, newKaryawan]);
-  };
 
-  // Fungsi untuk menghapus karyawan
-  const hapusKaryawan = (id: number) => {
-    setKaryawan(karyawan.filter(k => k.id !== id));
-  };
+    fetchKaryawan();
+  }, []);
 
-  // Menentukan class aktif untuk menu yang dipilih (digunakan di Sidebar misalnya)
-  const activeClass = "flex items-center gap-3 p-3 rounded-lg bg-blue-500 text-white hover:bg-blue-400";
-  const inactiveClass = "flex items-center gap-3 p-3 rounded-lg hover:bg-blue-500 text-white";
+  const hapusKaryawan = async (id: number) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      await axios.delete(`${apiUrl}/api/user/${id}`, { withCredentials: true });
+      setKaryawan((prev) => prev.filter((k) => k.id_user !== id));
+    } catch (err: any) {
+      console.error("🔥 Gagal menghapus karyawan:", err);
+      setError(`Gagal menghapus karyawan: ${err.message}`);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
       <Sidebar />
-
-      {/* Content Area */}
-      <div className="flex-1 p-8 overflow-hidden">
-        <h1 className="text-4xl font-bold text-center text-blue-600 mb-8 animate__animated animate__fadeIn animate__delay-1s">
+      <div className="flex-1 p-8">
+        <h1 className="text-4xl font-bold text-center text-blue-600 mb-8">
           Data Karyawan
         </h1>
 
-        <div className="overflow-x-auto bg-white p-6 rounded-xl shadow-lg transform transition duration-500 hover:scale-105">
-          <table className="min-w-full text-gray-700 table-auto">
-            <thead className="bg-gradient-to-r from-blue-500 to-teal-500 text-white">
-              <tr>
-                <th className="py-3 px-6 text-left">ID</th>
-                <th className="py-3 px-6 text-left">Nama</th>
-                <th className="py-3 px-6 text-left">Akun</th>
-                <th className="py-3 px-6 text-left">Password</th>
-                <th className="py-3 px-6 text-left">Jabatan</th>
-                <th className="py-3 px-6 text-left">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {karyawan.map(k => (
-                <tr key={k.id} className="border-b hover:bg-gray-100 transition duration-300 ease-in-out transform hover:scale-105">
-                  <td className="py-4 px-6">{k.id}</td>
-                  <td className="py-4 px-6">{k.nama}</td>
-                  <td className="py-4 px-6">{k.akun}</td>
-                  <td className="py-4 px-6">{k.password}</td>
-                  <td className="py-4 px-6 capitalize">{k.jabatan}</td>
-                  <td className="py-4 px-6 flex gap-3 items-center">
-                    <button className="bg-yellow-400 text-black px-5 py-2 rounded-full shadow-md hover:bg-yellow-500 transition-colors duration-300 ease-in-out transform hover:scale-105">
-                      Ubah
-                    </button>
-                    <button 
-                      onClick={() => hapusKaryawan(k.id)} 
-                      className="bg-red-500 text-white px-5 py-2 rounded-full shadow-md hover:bg-red-600 transition-colors duration-300 ease-in-out transform hover:scale-105"
-                    >
-                      Hapus
-                    </button>
-                  </td>
+        {loading ? (
+          <p className="text-center">Loading...</p>
+        ) : error ? (
+          <p className="text-center text-red-500">{error}</p>
+        ) : (
+          <div className="overflow-x-auto bg-white p-6 rounded-xl shadow-lg">
+            <table className="min-w-full text-gray-700 table-auto border border-gray-200">
+              <thead className="bg-blue-500 text-white">
+                <tr>
+                  <th className="py-3 px-6 text-left border">No</th>
+                  <th className="py-3 px-6 text-left border">Nama</th>
+                  <th className="py-3 px-6 text-left border">Email</th>
+                  <th className="py-3 px-6 text-left border">Role</th>
+                  <th className="py-3 px-6 text-left border">Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {karyawan.map((k, index) => (
+                  <tr key={k.id_user} className="border-b hover:bg-gray-100">
+                    <td className="py-4 px-6 border">{index + 1}</td>
+                    <td className="py-4 px-6 border">{k.username}</td>
+                    <td className="py-4 px-6 border">{k.email}</td>
+                    <td className="py-4 px-6 border capitalize">{k.role}</td>
+                    <td className="py-4 px-6 flex gap-3 border">
+                      <button
+                        onClick={() => router.push(`/edit/${k.id_user}`)}
+                        className="bg-yellow-400 px-5 py-2 rounded-md hover:bg-yellow-500"
+                      >
+                        Ubah
+                      </button>
+                      {k.role !== "Admin" && (
+                        <button
+                          onClick={() => hapusKaryawan(k.id_user)}
+                          className="bg-red-500 px-5 py-2 rounded-md hover:bg-red-600"
+                        >
+                          Hapus
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-          <div className="mt-8 text-center">
-            <button 
-              onClick={tambahKaryawan} 
-              className="bg-green-500 text-white px-8 py-3 rounded-lg shadow-lg hover:bg-green-600 transition-colors duration-300 ease-in-out transform hover:scale-105 mr-4"
-            >
-              Tambah Karyawan
-            </button>
+            <div className="mt-8 text-center">
+              <button
+                onClick={() => router.push("/add")}
+                className="bg-green-500 px-8 py-3 rounded-lg hover:bg-green-600"
+              >
+                Tambah Karyawan
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
