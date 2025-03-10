@@ -9,22 +9,32 @@ export default function AddKaryawanPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("Admin");
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+    if (!username || !email || !password || !role) {
+      setError("Semua field harus diisi!");
+      return;
+    }
+
     try {
-      await axios.post("http://localhost:5000/api/register", {
+      setError(null);
+      await axios.post(`${apiUrl}/api/register`, {
         username,
         email,
         password,
         role,
       });
+
       router.push("/karyawan");
       router.refresh();
-      console.log("Berhasil register");
     } catch (error: any) {
       console.error("Error saat register:", error);
+      setError(error.response?.data?.message || "Terjadi kesalahan saat register.");
     }
   }
 
@@ -34,6 +44,9 @@ export default function AddKaryawanPage() {
         <h1 className="text-3xl font-bold text-center text-blue-600 mb-6 drop-shadow-md">
           Tambah Karyawan
         </h1>
+
+        {error && <p className="text-red-500 text-center">{error}</p>}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-gray-700 font-semibold">Username</label>
@@ -74,7 +87,8 @@ export default function AddKaryawanPage() {
               required
             >
               <option value="Admin">Admin</option>
-              <option value="Owner">Owner</option>
+              <option value="Staff">Staff</option>
+              <option value="karyawan">Karyawan</option>
             </select>
           </div>
           <button

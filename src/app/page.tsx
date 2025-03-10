@@ -20,15 +20,52 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isChecking, setIsChecking] = useState(true);
   const router = useRouter();
 
-  // Redirect jika token sudah ada
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      router.push("/Home");
+
+    if (!token) {
+      setIsChecking(false);
+      return;
     }
-  }, [router]);
+
+    try {
+      const decoded: TokenPayload = jwtDecode<TokenPayload>(token);
+
+      switch (decoded.role) {
+        case "Admin":
+          router.replace("/Home");
+          break;
+        case "Karyawan":
+          router.replace("/Karyawan/Home");
+          break;
+        case "Staff":
+          router.replace("/Staff/Home");
+          break;
+        default:
+          logoutUser(); // Jika role tidak valid, langsung logout
+      }
+    } catch (error) {
+      console.error("Gagal mendekode token:", error);
+      logoutUser();
+    }
+  }, [isChecking]); // Gunakan `isChecking` agar setelah logout, `useEffect` jalan ulang
+
+  const logoutUser = () => {
+    localStorage.removeItem("token");
+    setIsChecking(false); // Pastikan form login muncul kembali
+    router.push("/login"); // Redirect ke halaman login setelah logout
+  };
+
+  if (isChecking) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>Memeriksa sesi...</p>
+      </div>
+    );
+  }
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -39,10 +76,9 @@ const LoginPage = () => {
     }
 
     try {
-      // Pastikan URL backend sudah benar
-      const url = process.env.NEXT_PUBLIC_URL
-        ? `${process.env.NEXT_PUBLIC_URL}/api/login`
-        : "/api/login"; // Fallback jika .env tidak ada
+      const url = process.env.NEXT_PUBLIC_API_URL
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/login`
+        : "/api/login";
 
       const res = await axios.post<LoginResponse>(
         url,
@@ -53,19 +89,27 @@ const LoginPage = () => {
       const { token } = res.data;
       if (token) {
         try {
-          // Decode token dengan aman
           const decoded: TokenPayload = jwtDecode<TokenPayload>(token);
+          localStorage.setItem("token", token);
 
-          // Simpan token hanya jika user role valid
-          if (decoded.role === "A  dmin") {
-            localStorage.setItem("token", token);
-            router.push("/Home");
-          } else {
-            setError("Akses ditolak! Role tidak dikenali.");
+          switch (decoded.role) {
+            case "Admin":
+              router.push("/Home");
+              break;
+            case "Karyawan":
+              router.push("/Karyawan/Home");
+              break;
+            case "Staff":
+              router.push("/Staff/Home");
+              break;
+            default:
+              setError("Akses ditolak! Role tidak dikenali.");
+              logoutUser();
           }
         } catch (decodeError) {
           console.error("Gagal mendekode token:", decodeError);
           setError("Token tidak valid. Silakan login ulang.");
+          logoutUser();
         }
       } else {
         setError("Login gagal. Token tidak diterima.");

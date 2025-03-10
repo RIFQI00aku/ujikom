@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Sidebar from "../components/sidebar";
@@ -25,7 +25,8 @@ export default function KaryawanPage() {
         const response = await axios.get<Karyawan[]>(`${apiUrl}/api/user`, {
           withCredentials: true,
         });
-        console.log("Response dari server:", response.data);
+
+        console.log("📡 Response dari server:", response.data);
 
         if (Array.isArray(response.data)) {
           setKaryawan(response.data);
@@ -45,7 +46,7 @@ export default function KaryawanPage() {
     fetchKaryawan();
   }, []);
 
-  const hapusKaryawan = async (id: number) => {
+  const hapusKaryawan = useCallback(async (id: number) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
       await axios.delete(`${apiUrl}/api/user/${id}`, { withCredentials: true });
@@ -54,14 +55,14 @@ export default function KaryawanPage() {
       console.error("🔥 Gagal menghapus karyawan:", err);
       setError(`Gagal menghapus karyawan: ${err.message}`);
     }
-  };
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
       <Sidebar />
       <div className="flex-1 p-8">
         <h1 className="text-4xl font-bold text-center text-blue-600 mb-8">
-          Data Karyawan
+          DAFTAR PENGGUNA
         </h1>
 
         {loading ? (
@@ -86,21 +87,25 @@ export default function KaryawanPage() {
                     <td className="py-4 px-6 border">{index + 1}</td>
                     <td className="py-4 px-6 border">{k.username}</td>
                     <td className="py-4 px-6 border">{k.email}</td>
-                    <td className="py-4 px-6 border capitalize">{k.role}</td>
+                    <td className="py-4 px-6 border capitalize">
+                      {k.role ? k.role.charAt(0).toUpperCase() + k.role.slice(1).toLowerCase() : "Tidak Diketahui"}
+                    </td>
                     <td className="py-4 px-6 flex gap-3 border">
-                      <button
-                        onClick={() => router.push(`/edit/${k.id_user}`)}
-                        className="bg-yellow-400 px-5 py-2 rounded-md hover:bg-yellow-500"
-                      >
-                        Ubah
-                      </button>
-                      {k.role !== "Admin" && (
-                        <button
-                          onClick={() => hapusKaryawan(k.id_user)}
-                          className="bg-red-500 px-5 py-2 rounded-md hover:bg-red-600"
-                        >
-                          Hapus
-                        </button>
+                      {k.role.toLowerCase() !== "admin" && (
+                        <>
+                          <button
+                            onClick={() => router.push(`/edit/${k.id_user}`)}
+                            className="bg-yellow-400 px-5 py-2 rounded-md hover:bg-yellow-500"
+                          >
+                            Ubah
+                          </button>
+                          <button
+                            onClick={() => hapusKaryawan(k.id_user)}
+                            className="bg-red-500 px-5 py-2 rounded-md hover:bg-red-600"
+                          >
+                            Hapus
+                          </button>
+                        </>
                       )}
                     </td>
                   </tr>

@@ -12,16 +12,16 @@
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node", // Resolusi modul menggunakan Node.js
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve", // Menyatakan React JSX baru
+    "jsx": "preserve",
     "incremental": true,
-    "baseUrl": "./", // Base URL untuk folder sumber daya
+    "baseUrl": "./",
     "paths": {
       "@/*": [
         "./src/*"
-      ] // Menentukan alias untuk src
+      ]
     },
     "plugins": [
       {
@@ -30,12 +30,13 @@
     ]
   },
   "include": [
-    "next-env.d.ts", // File deklarasi Next.js
-    "src/**/*", // Menyertakan semua file di dalam folder src
-    ".next/types/**/*.ts" // File deklarasi Next.js build
+    "next-env.d.ts",
+    "src/**/*",
+    ".next/types/**/*.ts",
+    "@types/**/*" // Tambahkan ini untuk menyertakan folder @types
   ],
   "exclude": [
-    "node_modules", // Menyaring folder node_modules
-    "build" // Jika Anda memiliki folder build, pastikan dikecualikan
+    "node_modules",
+    "build"
   ]
 }
